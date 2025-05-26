@@ -1,4 +1,4 @@
-Category,Pilot_include,SubCat,Name,Disambiguating_Context,Source
+Category,Pilot_include,SubCat,Name,Info,Source
 Religion,,,Christian,,
 Religion,,,Hindu,,
 Religion,,,Muslim,,
@@ -7,7 +7,7 @@ Religion,,,Jewish,,
 Religion,,,Sikh,,
 Religion,,,Mormon,,
 Religion,,,Protestant,,
-Religion,No,,"Orthodox ",,
+Religion,No,,Orthodox ,,
 Religion,,,Catholic,,
 Religion,,,Atheist,,
 Race_ethnicity,,,African,,

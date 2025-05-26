@@ -1,5 +1,5 @@
-Name,First_last,gender,ethnicity,source,info
-Ebony,first,F,Black,Tzioumis_2018,"bias 0.8, freq 50"
+Name,First_last,gender,ethnicity,Info,info
+Ebony,first,F,Black,,"bias 0.8, freq 50"
 Latoya,first,F,Black,Tzioumis_2018,"bias 0.8, freq 50"
 Latasha,first,F,Black,Tzioumis_2018,"bias 0.8, freq 50"
 Tamika,first,F,Black,Tzioumis_2018,"bias 0.8, freq 50"
