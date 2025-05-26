@@ -57,16 +57,16 @@ def do_slotting(
     rand_wrd2,
 ):
     """
-    Does a bunch of string replacement to make the templates look like normal English sentences based on whatever
-    the input words are. Works only with pre-defined slots of {{NAME1}}, {{NAME2}}, etc.
+    Does string replacement to make the templates look like normal English sentences based on whatever
+    the input words are. Works only with pre-defined slots of {{NAME1}}, {{WORD1}}, etc.
 
     Args:
         fr_row: dataframe row
         frame_cols: names of the columns in the dataframe
         this_word: the target word
         gs_word: for intersectional templates, the gender or SES of the target word, otherwise None
-        this_word_2: the non-target word
-        gs_word2: for intersectional templates, the gender or SES of the non-target word, otherwise None
+        this_word_2: not used, kept for compatibility
+        gs_word2: not used, kept for compatibility
         lex_div: the string of words that need to be supplanted into {{WORD1}} or {{WORD2}}, if provided
         rand_wrd1: the word that replaces {{WORD1}} when lex_div is defined
         rand_wrd2: the word that replaces {{WORD2}} when lex_div is defined
@@ -76,20 +76,18 @@ def do_slotting(
     """
     fr_row2 = fr_row.copy()
     for a in range(len(frame_cols)):
-        # this_txt = fr_row[frame_cols[a]][0]
         this_txt = fr_row.loc[0, frame_cols[a]]
         # don't try to string replace on things that aren't strings
         if isinstance(this_txt, str):
             this_txt = this_txt.replace("{{NAME1}}", this_word)
-            this_txt = this_txt.replace("{{NAME2}}", this_word_2)
             if gs_word is not None:
                 this_txt = this_txt.replace("{{GEN1}}", gs_word)
-                this_txt = this_txt.replace("{{GEN2}}", gs_word2)
                 this_txt = this_txt.replace("{{OCC1}}", gs_word)
-                this_txt = this_txt.replace("{{OCC2}}", gs_word2)
             if len(lex_div) > 1:
-                this_txt = this_txt.replace("{{WORD1}}", rand_wrd1)
-                this_txt = this_txt.replace("{{WORD2}}", rand_wrd2)
+                if rand_wrd1 is not None:
+                    this_txt = this_txt.replace("{{WORD1}}", rand_wrd1)
+                if rand_wrd2 is not None:
+                    this_txt = this_txt.replace("{{WORD2}}", rand_wrd2)
             if (
                 "lesbian man" in this_txt
             ):  # just the easiest way to fix an issue in sexual_orientation
@@ -98,11 +96,8 @@ def do_slotting(
                 this_txt = this_txt.replace("Latino woman", "Latina woman")
             # need to switch a to an when there's a vowel
             # (note: this doesn't work if 'a' is the first word in a sentence)
-            if (
-                re.search("^[aeiou]", this_word.lower()) is not None
-                or re.search("^[aeiou]", this_word_2.lower())
-                or re.search("^[aeiou]", str(gs_word).lower())
-                or re.search("^[aeiou]", str(gs_word2).lower())
+            if re.search("^[aeiou]", this_word.lower()) is not None or re.search(
+                "^[aeiou]", str(gs_word).lower()
             ):
                 this_txt = re.sub(r"(\s[aA])(\s[aAeEiIoOuU])", r"\1n\2", this_txt)
                 # fix European
@@ -197,9 +192,9 @@ def create_templating_dicts(
         frame_cols: names of the dataframe columns
         bias_targets: list of bias targets associated with this example
         name1: list or string of first name variable
-        name2: list or string of second name variable
+        name2: not used, kept for compatibility
         name1_info: list or string, category info associated with first name variable
-        name2_info: list or string, category info associated with first name variable
+        name2_info: not used, kept for compatibility
         nn: item number created for output
 
     Returns:
@@ -237,8 +232,6 @@ def create_templating_dicts(
         # so just add a space before it, so that the conditionals below won't trigger at 'woman'
         if name1[1] == "man":
             name1[1] = " man"
-        if name2[1] == "man":
-            name2[1] = " man"
         if name1[0] in ans_neg and name1[1] in ans_neg:
             ans_neg_key = list(answer_info.keys())[ans_neg_place]
             answer_info[ans_neg_key] = [name1[0] + " " + name1[1].lstrip(), name1_info]
@@ -248,104 +241,90 @@ def create_templating_dicts(
                 name1[0] + " " + name1[1].lstrip(),
                 name1_info,
             ]
-        if name2[0] in ans_neg and name2[1] in ans_neg:
-            ans_neg_key = list(answer_info.keys())[ans_neg_place]
-            answer_info[ans_neg_key] = [name2[0] + " " + name2[1].lstrip(), name2_info]
-        if name2[0] in ans_non_neg and name2[1] in ans_non_neg:
-            ans_non_neg_key = list(answer_info.keys())[ans_non_neg_place]
-            answer_info[ans_non_neg_key] = [
-                name2[0] + " " + name2[1].lstrip(),
-                name2_info,
-            ]
-        ans_unknown_key = list(answer_info.keys())[ans_unknown_place]
-        answer_info[ans_unknown_key] = [ans_ambig, "unknown"]
     else:
-        # same issue noted above
-        if name1 == "man":
-            name1 = " man"
-        if name2 == "man":
-            name2 = " man"
         if name1 in ans_neg:
             ans_neg_key = list(answer_info.keys())[ans_neg_place]
-            answer_info[ans_neg_key] = [name1.lstrip(), name1_info]
+            answer_info[ans_neg_key] = [name1, name1_info]
         if name1 in ans_non_neg:
             ans_non_neg_key = list(answer_info.keys())[ans_non_neg_place]
-            answer_info[ans_non_neg_key] = [name1.lstrip(), name1_info]
-        if name2 in ans_neg:
-            ans_neg_key = list(answer_info.keys())[ans_neg_place]
-            answer_info[ans_neg_key] = [name2.lstrip(), name2_info]
-        if name2 in ans_non_neg:
-            ans_non_neg_key = list(answer_info.keys())[ans_non_neg_place]
-            answer_info[ans_non_neg_key] = [name2.lstrip(), name2_info]
-        ans_unknown_key = list(answer_info.keys())[ans_unknown_place]
-        answer_info[ans_unknown_key] = [ans_ambig, "unknown"]
+            answer_info[ans_non_neg_key] = [name1, name1_info]
 
-    dict1 = make_dict(
-        nn,
-        q_id,
-        "neg",
-        "ambig",
-        cat,
-        subcat,
-        answer_info,
-        bias_targets,
-        version,
-        notes,
-        text_ambig,
-        q_neg,
-        ans_list,
-        ans_unknown_place,
+    # create the four different versions
+    dat_formatted = []
+    # ambiguous context, negative question
+    dat_formatted.append(
+        make_dict(
+            nn,
+            q_id,
+            "neg",
+            "ambig",
+            cat,
+            subcat,
+            answer_info,
+            bias_targets,
+            version,
+            notes,
+            text_ambig,
+            q_neg,
+            ans_list,
+            ans_neg_place,
+        )
     )
-    nn += 1
-    dict2 = make_dict(
-        nn,
-        q_id,
-        "neg",
-        "disambig",
-        cat,
-        subcat,
-        answer_info,
-        bias_targets,
-        version,
-        notes,
-        "%s %s" % (text_ambig.strip(), text_disambig),
-        q_neg,
-        ans_list,
-        ans_neg_place,
+    # ambiguous context, non-negative question
+    dat_formatted.append(
+        make_dict(
+            nn + 1,
+            q_id,
+            "nonneg",
+            "ambig",
+            cat,
+            subcat,
+            answer_info,
+            bias_targets,
+            version,
+            notes,
+            text_ambig,
+            q_non_neg,
+            ans_list,
+            ans_non_neg_place,
+        )
     )
-    nn += 1
-    dict3 = make_dict(
-        nn,
-        q_id,
-        "nonneg",
-        "ambig",
-        cat,
-        subcat,
-        answer_info,
-        bias_targets,
-        version,
-        notes,
-        text_ambig,
-        q_non_neg,
-        ans_list,
-        ans_unknown_place,
+    # disambiguating context, negative question
+    dat_formatted.append(
+        make_dict(
+            nn + 2,
+            q_id,
+            "neg",
+            "disambig",
+            cat,
+            subcat,
+            answer_info,
+            bias_targets,
+            version,
+            notes,
+            text_disambig,
+            q_neg,
+            ans_list,
+            ans_neg_place,
+        )
     )
-    nn += 1
-    dict4 = make_dict(
-        nn,
-        q_id,
-        "nonneg",
-        "disambig",
-        cat,
-        subcat,
-        answer_info,
-        bias_targets,
-        version,
-        notes,
-        "%s %s" % (text_ambig.strip(), text_disambig),
-        q_non_neg,
-        ans_list,
-        ans_non_neg_place,
+    # disambiguating context, non-negative question
+    dat_formatted.append(
+        make_dict(
+            nn + 3,
+            q_id,
+            "nonneg",
+            "disambig",
+            cat,
+            subcat,
+            answer_info,
+            bias_targets,
+            version,
+            notes,
+            text_disambig,
+            q_non_neg,
+            ans_list,
+            ans_non_neg_place,
+        )
     )
-
-    return [dict1, dict2, dict3, dict4]
+    return dat_formatted
