@@ -9,15 +9,15 @@ import ast
 
 # all possible values of cat
 cats = [
-    "Disability_status",
-    "Age",
-    "Physical_appearance",
-    "SES",
+    # "Disability_status",
+    # "Age",
+    # "Physical_appearance",
+    # "SES",
     "Gender_identity",
     "Race_ethnicity",
     "Religion",
     "Nationality",
-    "Sexual_orientation",
+    # "Sexual_orientation",
 ]
 
 # read in vocabulary files
