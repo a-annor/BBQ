@@ -122,6 +122,7 @@ def make_dict(
     ans_list,
     ans_place,
     lowercase_conversion="no",
+    name=None,
 ):
     """
     Formats information into a standardized dict that can be saved to jsonl
@@ -142,6 +143,7 @@ def make_dict(
         ans_list: list of answer options
         ans_place: label corresponding to which answer option is correct
         lowercase_conversion: whether this is a lowercase version of the word ("yes" or "no")
+        name: the word that replaces {{NAME1}} in the template
 
     Returns:
         dictionary
@@ -166,6 +168,7 @@ def make_dict(
         "ans1": ans_list[1],
         "ans2": ans_list[2],
         "label": ans_place,
+        "name": name,
     }
     return this_dict
 
@@ -273,6 +276,9 @@ def create_templating_dicts(
         text_ambig_version = this_frame_row_copy.Ambiguous_Context[0]
         text_disambig_version = this_frame_row_copy.Disambiguating_Context[0]
 
+        # Get the name to use in the output
+        output_name = lowercase_name1 if lowercase_conversion == "yes" else name1
+
         # ambiguous context, negative question
         versions.append(
             make_dict(
@@ -291,6 +297,7 @@ def create_templating_dicts(
                 ans_list,
                 ans_neg_place,
                 lowercase_conversion,
+                output_name,
             )
         )
         # ambiguous context, non-negative question
@@ -311,6 +318,7 @@ def create_templating_dicts(
                 ans_list,
                 ans_non_neg_place,
                 lowercase_conversion,
+                output_name,
             )
         )
         # disambiguating context, negative question
@@ -331,6 +339,7 @@ def create_templating_dicts(
                 ans_list,
                 ans_neg_place,
                 lowercase_conversion,
+                output_name,
             )
         )
         # disambiguating context, non-negative question
@@ -351,6 +360,7 @@ def create_templating_dicts(
                 ans_list,
                 ans_non_neg_place,
                 lowercase_conversion,
+                output_name,
             )
         )
         return versions
