@@ -17,6 +17,8 @@ def return_list_from_string(inputx):
         two lists
     """
     x = inputx.split(";")
+    wrds1 = []  # Initialize wrds1
+    wrds2 = []  # Initialize wrds2
     for wrd in x:
         if "WORD1" in wrd or "NAME1" in wrd:
             wrd2 = (
@@ -40,8 +42,6 @@ def return_list_from_string(inputx):
             wrds = wrd3.replace("[", "").replace("]", "")
             wrds2 = wrds.split(",")
             wrds2 = [w.strip() for w in wrds2]
-        else:
-            wrds2 = ""
     return wrds1, wrds2
 
 
@@ -75,6 +75,9 @@ def do_slotting(
         the dataframe row with all slots filled
     """
     fr_row2 = fr_row.copy()
+    # Store the random words in the frame row
+    fr_row2.loc[0, "rand_wrd1"] = rand_wrd1
+    fr_row2.loc[0, "rand_wrd2"] = rand_wrd2
     for a in range(len(frame_cols)):
         this_txt = fr_row.loc[0, frame_cols[a]]
         # don't try to string replace on things that aren't strings
@@ -123,6 +126,9 @@ def make_dict(
     ans_place,
     lowercase_conversion="no",
     name=None,
+    template=None,
+    word1=None,
+    word2=None,
 ):
     """
     Formats information into a standardized dict that can be saved to jsonl
@@ -144,6 +150,9 @@ def make_dict(
         ans_place: label corresponding to which answer option is correct
         lowercase_conversion: whether this is a lowercase version of the word ("yes" or "no")
         name: the word that replaces {{NAME1}} in the template
+        template: the original ambiguous context template
+        word1: the first word used in the template
+        word2: the second word used in the template
 
     Returns:
         dictionary
@@ -169,12 +178,16 @@ def make_dict(
         "ans2": ans_list[2],
         "label": ans_place,
         "name": name,
+        "template": template,
+        "word1": word1,
+        "word2": word2,
     }
     return this_dict
 
 
 def create_templating_dicts(
     cat,
+    original_frame_row,
     this_frame_row,
     subcat,
     unknown_options,
@@ -192,6 +205,7 @@ def create_templating_dicts(
 
     Args:
         cat: bias category
+        original_frame_row: the frame row with slots NOT filled (for original template)
         this_frame_row: the frame row with slots already filled
         subcat: the subcategory of bias, if provided
         unknown_options: the string meaning 'unknown'
@@ -221,6 +235,21 @@ def create_templating_dicts(
         version = "None"
 
     notes = this_frame_row.Notes[0]
+
+    # Get the original template from the unfilled row
+    original_template = original_frame_row.Ambiguous_Context[0]
+
+    # Get the words that will be used for replacement
+    word1 = ""
+    word2 = ""
+    lex_div = this_frame_row.Lexical_diversity[0]
+    if len(lex_div) > 1:
+        wrdlist1, wrdlist2 = return_list_from_string(lex_div)
+        # Only get replacement words if the template contains the corresponding placeholders
+        if "{{WORD1}}" in original_template:
+            word1 = this_frame_row.rand_wrd1[0] if "rand_wrd1" in this_frame_row else ""
+        if "{{WORD2}}" in original_template:
+            word2 = this_frame_row.rand_wrd2[0] if "rand_wrd2" in this_frame_row else ""
 
     # for answer option order randomization
     ans_list = [ans_neg, ans_non_neg, ans_ambig]
@@ -298,6 +327,9 @@ def create_templating_dicts(
                 ans_neg_place,
                 lowercase_conversion,
                 output_name,
+                original_template,
+                word1,
+                word2,
             )
         )
         # ambiguous context, non-negative question
@@ -319,6 +351,9 @@ def create_templating_dicts(
                 ans_non_neg_place,
                 lowercase_conversion,
                 output_name,
+                original_template,
+                word1,
+                word2,
             )
         )
         # disambiguating context, negative question
@@ -340,6 +375,9 @@ def create_templating_dicts(
                 ans_neg_place,
                 lowercase_conversion,
                 output_name,
+                original_template,
+                word1,
+                word2,
             )
         )
         # disambiguating context, non-negative question
@@ -361,26 +399,19 @@ def create_templating_dicts(
                 ans_non_neg_place,
                 lowercase_conversion,
                 output_name,
+                original_template,
+                word1,
+                word2,
             )
         )
         return versions
 
-    # For race/ethnicity and nationality categories, create both lowercase and regular versions
-    if cat in ["Race_ethnicity", "Nationality"]:
-        # Create regular version
-        dat_formatted.extend(create_versions("no"))
+    # Create the regular versions
+    dat_formatted.extend(create_versions())
 
-        # Create lowercase version of name1
-        if isinstance(name1, list):
-            lowercase_name1 = [name1[0].lower(), name1[1].lower()]
-            lowercase_name1 = " ".join(lowercase_name1)
-        else:
-            lowercase_name1 = name1.lower()
-
-        # Create lowercase versions
+    # Create lowercase versions if needed
+    if isinstance(name1, str) and name1[0].isupper():
+        lowercase_name1 = name1.lower()
         dat_formatted.extend(create_versions("yes", lowercase_name1))
-    else:
-        # For other categories, just create regular versions
-        dat_formatted.extend(create_versions("no"))
 
     return dat_formatted

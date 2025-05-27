@@ -327,7 +327,8 @@ for cat in cats:
                 # create four sets of data, each as a dictionary
                 dat_formatted = create_templating_dicts(
                     cat,
-                    new_frame_row,
+                    this_frame_row,  # original, unfilled row
+                    new_frame_row,  # slotted, filled row
                     this_subcat,
                     unknown_options,
                     frame_cols,
@@ -365,7 +366,8 @@ for cat in cats:
                     # create four sets of data, each as a dictionary
                     dat_formatted = create_templating_dicts(
                         cat,
-                        new_frame_row,
+                        this_frame_row,  # original, unfilled row
+                        new_frame_row,  # slotted, filled row
                         this_subcat,
                         unknown_options,
                         frame_cols,
