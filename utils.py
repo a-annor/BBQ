@@ -121,6 +121,7 @@ def make_dict(
     question,
     ans_list,
     ans_place,
+    lowercase_conversion="no",
 ):
     """
     Formats information into a standardized dict that can be saved to jsonl
@@ -140,6 +141,7 @@ def make_dict(
         question: string, question provided for model input
         ans_list: list of answer options
         ans_place: label corresponding to which answer option is correct
+        lowercase_conversion: whether this is a lowercase version of the word ("yes" or "no")
 
     Returns:
         dictionary
@@ -156,6 +158,7 @@ def make_dict(
             "stereotyped_groups": bias_targets,
             "version": version,
             "source": notes,
+            "lowercase_conversion": lowercase_conversion,
         },
         "context": context.strip(),
         "question": question.strip(),
@@ -251,80 +254,123 @@ def create_templating_dicts(
 
     # create the four different versions
     dat_formatted = []
-    # ambiguous context, negative question
-    dat_formatted.append(
-        make_dict(
-            nn,
-            q_id,
-            "neg",
-            "ambig",
-            cat,
-            subcat,
-            answer_info,
-            bias_targets,
-            version,
-            notes,
-            text_ambig,
-            q_neg,
-            ans_list,
-            ans_neg_place,
+
+    # Function to create the four versions with given lowercase_conversion value
+    def create_versions(lowercase_conversion="no", lowercase_name1=None):
+        versions = []
+        # Create a copy of the frame row for this version
+        this_frame_row_copy = this_frame_row.copy()
+
+        # If we're creating a lowercase version, replace NAME1 with lowercase version
+        if lowercase_conversion == "yes" and lowercase_name1 is not None:
+            for col in frame_cols:
+                if isinstance(this_frame_row_copy[col][0], str):
+                    this_frame_row_copy[col][0] = this_frame_row_copy[col][0].replace(
+                        name1, lowercase_name1
+                    )
+
+        # Get the text for this version
+        text_ambig_version = this_frame_row_copy.Ambiguous_Context[0]
+        text_disambig_version = this_frame_row_copy.Disambiguating_Context[0]
+
+        # ambiguous context, negative question
+        versions.append(
+            make_dict(
+                nn,
+                q_id,
+                "neg",
+                "ambig",
+                cat,
+                subcat,
+                answer_info,
+                bias_targets,
+                version,
+                notes,
+                text_ambig_version,
+                q_neg,
+                ans_list,
+                ans_neg_place,
+                lowercase_conversion,
+            )
         )
-    )
-    # ambiguous context, non-negative question
-    dat_formatted.append(
-        make_dict(
-            nn + 1,
-            q_id,
-            "nonneg",
-            "ambig",
-            cat,
-            subcat,
-            answer_info,
-            bias_targets,
-            version,
-            notes,
-            text_ambig,
-            q_non_neg,
-            ans_list,
-            ans_non_neg_place,
+        # ambiguous context, non-negative question
+        versions.append(
+            make_dict(
+                nn + 1,
+                q_id,
+                "nonneg",
+                "ambig",
+                cat,
+                subcat,
+                answer_info,
+                bias_targets,
+                version,
+                notes,
+                text_ambig_version,
+                q_non_neg,
+                ans_list,
+                ans_non_neg_place,
+                lowercase_conversion,
+            )
         )
-    )
-    # disambiguating context, negative question
-    dat_formatted.append(
-        make_dict(
-            nn + 2,
-            q_id,
-            "neg",
-            "disambig",
-            cat,
-            subcat,
-            answer_info,
-            bias_targets,
-            version,
-            notes,
-            text_disambig,
-            q_neg,
-            ans_list,
-            ans_neg_place,
+        # disambiguating context, negative question
+        versions.append(
+            make_dict(
+                nn + 2,
+                q_id,
+                "neg",
+                "disambig",
+                cat,
+                subcat,
+                answer_info,
+                bias_targets,
+                version,
+                notes,
+                text_disambig_version,
+                q_neg,
+                ans_list,
+                ans_neg_place,
+                lowercase_conversion,
+            )
         )
-    )
-    # disambiguating context, non-negative question
-    dat_formatted.append(
-        make_dict(
-            nn + 3,
-            q_id,
-            "nonneg",
-            "disambig",
-            cat,
-            subcat,
-            answer_info,
-            bias_targets,
-            version,
-            notes,
-            text_disambig,
-            q_non_neg,
-            ans_list,
-            ans_non_neg_place,
+        # disambiguating context, non-negative question
+        versions.append(
+            make_dict(
+                nn + 3,
+                q_id,
+                "nonneg",
+                "disambig",
+                cat,
+                subcat,
+                answer_info,
+                bias_targets,
+                version,
+                notes,
+                text_disambig_version,
+                q_non_neg,
+                ans_list,
+                ans_non_neg_place,
+                lowercase_conversion,
+            )
         )
-    )
+        return versions
+
+    # For race/ethnicity and nationality categories, create both lowercase and regular versions
+    if cat in ["Race_ethnicity", "Nationality"]:
+        # Create regular version
+        dat_formatted.extend(create_versions("no"))
+
+        # Create lowercase version of name1
+        if isinstance(name1, list):
+            lowercase_name1 = [name1[0].lower(), name1[1].lower()]
+            lowercase_name1 = " ".join(lowercase_name1)
+        else:
+            lowercase_name1 = name1.lower()
+
+        # Create lowercase versions
+        dat_formatted.extend(create_versions("yes", lowercase_name1))
+    else:
+        # For other categories, just create regular versions
+        dat_formatted.extend(create_versions("no"))
+
     return dat_formatted
