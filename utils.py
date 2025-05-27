@@ -177,8 +177,8 @@ def make_dict(
         "ans1": ans_list[1],
         "ans2": ans_list[2],
         "label": ans_place,
-        "name": name,
         "template": template,
+        "name": name,
         "word1": word1,
         "word2": word2,
     }
