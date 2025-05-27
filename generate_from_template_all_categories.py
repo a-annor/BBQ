@@ -72,6 +72,7 @@ for cat in cats:
 
         # make sure that one of the words used is the target of the bias
         possible_word_list = words.Name.unique().tolist()
+        possible_word_list.append("NA")  # Always append NA to possible words
         bias_targets = the_frames.Known_stereotyped_groups[i]
 
         # Stereotyped groups info is not relevant for subsetting Names in some categories
@@ -292,8 +293,18 @@ for cat in cats:
                     cat == "SES" and this_subcat == "Occupation"
                 ):
                     # need to get the relevant info about the name from the vocab file
-                    Name1_info = vocab.loc[vocab["Name"] == this_word, "Info"].iloc[0]
-                    Name2_info = vocab.loc[vocab["Name"] == this_word_2, "Info"].iloc[0]
+                    vocab_match = vocab[vocab["Name"] == this_word]
+                    Name1_info = (
+                        vocab_match["Info"].iloc[0]
+                        if not vocab_match.empty
+                        else this_word
+                    )
+                    vocab_match = vocab[vocab["Name"] == this_word_2]
+                    Name2_info = (
+                        vocab_match["Info"].iloc[0]
+                        if not vocab_match.empty
+                        else this_word_2
+                    )
                 elif "NAME1_info" in frame_cols:
                     # for when the info about the name variables is stored in the templates
                     if this_frame_row.NAME1_info[0] != "":
