@@ -73,17 +73,23 @@ for cat in cats:
         # make sure that one of the words used is the target of the bias
         possible_word_list = words.Name.unique().tolist()
         possible_word_list.append("NA")  # Always append NA to possible words
-        bias_targets = the_frames.Known_stereotyped_groups[i]
+
+        # Handle empty or malformed data in Known_stereotyped_groups
+        if (
+            pd.isna(the_frames.Known_stereotyped_groups[i])
+            or not the_frames.Known_stereotyped_groups[i].strip()
+        ):
+            bias_targets = []
+        else:
+            bias_targets = ast.literal_eval(the_frames.Known_stereotyped_groups[i])
 
         # Stereotyped groups info is not relevant for subsetting Names in some categories
         # so only use that for creating the targeted word list when the info is provided, otherwise all possible
         # vocab items are targets
         if (len(bias_targets) > 1) and (cat in need_stereotyping_subset):
-            bias_targets = ast.literal_eval(the_frames.Known_stereotyped_groups[i])
             targeted_word_list = [x for x in possible_word_list if x in bias_targets]
         else:
             targeted_word_list = possible_word_list
-            bias_targets = ast.literal_eval(the_frames.Known_stereotyped_groups[i])
 
         # if the list of bias targets is too big, downsample
         if len(targeted_word_list) > 4:
