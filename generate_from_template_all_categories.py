@@ -72,12 +72,12 @@ for cat in cats:
 
         # make sure that one of the words used is the target of the bias
         possible_word_list = words.Name.unique().tolist()
-        possible_word_list.append("NA")  # Always append NA to possible words
 
         # Handle empty or malformed data in Known_stereotyped_groups
         if (
             pd.isna(the_frames.Known_stereotyped_groups[i])
             or not the_frames.Known_stereotyped_groups[i].strip()
+            or the_frames.Known_stereotyped_groups[i] == "NA"
         ):
             bias_targets = []
         else:
