@@ -63,6 +63,7 @@ for cat in cats:
 
     # initialize item id counter
     nn = 0
+    all_examples = []  # Collect all examples first
 
     for i in range(len(the_frames)):
 
@@ -380,16 +381,21 @@ for cat in cats:
                         dat_file.write("\n")
                     dat_file.flush()
 
-        print("generated %s sentences total for %s" % (str(nn), cat))
+    print("generated %s sentences total for %s" % (str(nn), cat))
 
     dat_file.close()
 
-    # Now update all example IDs in the file
+    # Read all examples, deduplicate, and assign IDs
     with open("data/%s.jsonl" % cat, "r") as f:
         lines = f.readlines()
+        examples = [json.loads(line) for line in lines]
+        # Deduplicate based on context and question
+        unique_examples = list(
+            {(item["context"], item["question"]): item for item in examples}.values()
+        )
 
+    # Write back with new IDs
     with open("data/%s.jsonl" % cat, "w") as f:
-        for i, line in enumerate(lines):
-            data = json.loads(line)
-            data["example_id"] = i
-            f.write(json.dumps(data) + "\n")
+        for i, example in enumerate(unique_examples):
+            example["example_id"] = i
+            f.write(json.dumps(example) + "\n")
