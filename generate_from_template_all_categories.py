@@ -337,9 +337,7 @@ for cat in cats:
                     this_word_2,
                     Name1_info,
                     Name2_info,
-                    nn,
                 )
-                nn += 4
                 for item in dat_formatted:
                     dat_file.write(json.dumps(item, default=str))
                     dat_file.write("\n")
@@ -376,9 +374,7 @@ for cat in cats:
                         this_word,
                         Name2_info,
                         Name1_info,
-                        nn,
                     )
-                    nn += 4
                     for item in dat_formatted:
                         dat_file.write(json.dumps(item, default=str))
                         dat_file.write("\n")
@@ -387,3 +383,13 @@ for cat in cats:
         print("generated %s sentences total for %s" % (str(nn), cat))
 
     dat_file.close()
+
+    # Now update all example IDs in the file
+    with open("data/%s.jsonl" % cat, "r") as f:
+        lines = f.readlines()
+
+    with open("data/%s.jsonl" % cat, "w") as f:
+        for i, line in enumerate(lines):
+            data = json.loads(line)
+            data["example_id"] = i
+            f.write(json.dumps(data) + "\n")
