@@ -93,8 +93,10 @@ for cat in cats:
             targeted_word_list = possible_word_list
 
         # if the list of bias targets is too big, downsample
-        if len(targeted_word_list) > 4:
-            word_list = random.sample(targeted_word_list, 5)
+        if len(targeted_word_list) > 19:
+            word_list = random.sample(
+                targeted_word_list, min(20, len(targeted_word_list))
+            )
         elif len(possible_word_list) < 2:  # these will be handled later
             word_list = []
         else:
@@ -116,8 +118,10 @@ for cat in cats:
             if len(this_subcat) > 1:
                 words = words[words.SubCat == this_subcat]
                 word_list = words.Name.unique().tolist()
-                if len(word_list) > 5:
-                    word_list = random.sample(word_list, 5)  # for downsampling
+                if len(word_list) > 19:
+                    word_list = random.sample(
+                        word_list, min(20, len(word_list))
+                    )  # for downsampling
             else:
                 this_subcat = "None"
         else:
@@ -145,7 +149,9 @@ for cat in cats:
                 else:
                     first_names = names_vocab[names_vocab.First_last == "first"]
                 word_list = first_names.Name.tolist()
-                word_list = random.sample(word_list, 5)  # for downsampling
+                word_list = random.sample(
+                    word_list, min(20, len(word_list))
+                )  # for downsampling
             # what to do if this is part of the gender_identity subset
             # this needs to pull from the set of first names that do not have ethnicity information
             elif cat == "Gender_identity":
@@ -153,14 +159,18 @@ for cat in cats:
                 # specify female so that the other NAME variable can be set to male and there's always a contrast
                 female_first_names = first_names[first_names.gender == "F"]
                 word_list = female_first_names.Name.tolist()
-                word_list = random.sample(word_list, 5)  # for downsampling
+                word_list = random.sample(
+                    word_list, min(20, len(word_list))
+                )  # for downsampling
             # a handful of templates in other categories use proper nouns
             # these don't have to be specific to gender, but should not be ethnically identifying, so pull from the
             # subset that doesn't correlate strongly to one racial/ethnic category
             else:
                 first_names = names_vocab[names_vocab.First_last == "first_only"]
                 word_list = first_names.Name.tolist()
-                word_list = random.sample(word_list, 6)  # for downsampling
+                word_list = random.sample(
+                    word_list, min(20, len(word_list))
+                )  # for downsampling
 
         # iterate over each word in word_list
         for j in range(len(word_list)):
@@ -180,9 +190,9 @@ for cat in cats:
                     new_word_list = [
                         n for n in possible_word_list if n not in bias_targets
                     ]
-                    if len(new_word_list) > 4:
+                    if len(new_word_list) > 19:
                         new_word_list = random.sample(
-                            new_word_list, 5
+                            new_word_list, min(20, len(new_word_list))
                         )  # downsample when needed
                 else:
                     new_word_list = [n for n in word_list if n != this_word]
@@ -201,7 +211,9 @@ for cat in cats:
                     Name1_info = the_word_gender
                     new_options = first_names[first_names.gender != the_word_gender]
                     new_word_list = new_options.Name.unique().tolist()
-                    new_word_list = random.sample(new_word_list, 5)  # for downsampling
+                    new_word_list = random.sample(
+                        word_list, min(20, len(word_list))
+                    )  # for downsampling
                 # for race/ethnicity...
                 if cat == "Race_ethnicity" and has_proper_name:
                     # keep track of gender and ethnicity of the name in question
@@ -227,7 +239,7 @@ for cat in cats:
                         & (first_names_full.gender == the_word_gender)
                     ].reset_index()
                     other_first_names = other_first_names.sample(
-                        n=5, replace=False
+                        n=20, replace=False
                     ).reset_index()  # for downsampling
                     other_last_names = names_vocab[
                         (names_vocab.First_last == "last")
@@ -381,8 +393,6 @@ for cat in cats:
                         dat_file.write("\n")
                     dat_file.flush()
 
-    print("generated %s sentences total for %s" % (str(nn), cat))
-
     dat_file.close()
 
     # Read all examples, deduplicate, and assign IDs
@@ -399,3 +409,8 @@ for cat in cats:
         for i, example in enumerate(unique_examples):
             example["example_id"] = i
             f.write(json.dumps(example) + "\n")
+
+    # Count the final number of unique examples
+    print(
+        "generated %s unique sentences total for %s" % (str(len(unique_examples)), cat)
+    )
