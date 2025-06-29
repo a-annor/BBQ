@@ -350,6 +350,7 @@ for cat in cats:
                     this_word_2,
                     Name1_info,
                     Name2_info,
+                    nn,
                 )
                 for item in dat_formatted:
                     dat_file.write(json.dumps(item, default=str))
@@ -387,6 +388,7 @@ for cat in cats:
                         this_word,
                         Name2_info,
                         Name1_info,
+                        nn,
                     )
                     for item in dat_formatted:
                         dat_file.write(json.dumps(item, default=str))
